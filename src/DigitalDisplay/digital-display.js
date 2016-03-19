@@ -3,6 +3,8 @@
 let emitter = require("global-queue");
 let ServiceApi = require('resource-management-framework')
 	.ServiceApi;
+let CommandFactory = require("./Command/Factory");
+
 
 class DigitalDisplay {
 	constructor() {
