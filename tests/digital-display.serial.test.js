@@ -27,7 +27,7 @@ describe.only("DigitalDisplay service to serial", () => {
 			let cmd = CommandFactory.getCommand('Akis', {
 				address: '8723',
 				command: 'display',
-				data: '123456',
+				data: '666',
 				flash: false,
 				bit_depth: 6
 			});

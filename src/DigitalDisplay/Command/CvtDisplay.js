@@ -1,8 +1,8 @@
 'use strict'
 
-let AbstractDisplay = require("./AbstractDisplay");
+let AkisDisplay = require("./AkisDisplay");
 
-class CvtDisplay extends AbstractDisplay {
+class CvtDisplay extends AkisDisplay {
 
 
 }
