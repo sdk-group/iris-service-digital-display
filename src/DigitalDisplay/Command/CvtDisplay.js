@@ -2,7 +2,10 @@
 
 let AbstractDisplay = require("./AbstractDisplay");
 
-class CvtDisplay extends AbstractDisplay {}
+class CvtDisplay extends AbstractDisplay {
+
+
+}
 
 
 module.exports = CvtDisplay;

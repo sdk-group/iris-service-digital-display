@@ -11,16 +11,7 @@ describe("DigitalDisplay service", () => {
 		service.init();
 	});
 	describe("DigitalDisplay service", () => {
-		it("should mark ticket called", (done) => {
-			return service.actionTicketCalled()
-				.then((res) => {
-					console.log(res);
-					done();
-				})
-				.catch((err) => {
-					done(err);
-				});
-		})
+		it("should mark ticket called", (done) => {})
 	})
 
 });

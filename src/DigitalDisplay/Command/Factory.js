@@ -3,7 +3,7 @@
 let discover = function (type) {
 	let Model;
 	try {
-		Model = require(`${_.upperFirst(_.camelCase(type))}Display.js`);
+		Model = require(`./${_.upperFirst(_.camelCase(type))}Display.js`);
 	} catch (e) {
 		Model = false;
 	} finally {

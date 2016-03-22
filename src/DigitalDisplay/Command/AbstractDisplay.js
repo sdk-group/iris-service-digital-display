@@ -4,8 +4,9 @@ class AbstractDisplay {
 	constructor() {
 
 	}
-
-	static getCommand(params) {}
+	static getCommand(params) {
+		throw new Error("It. Is. Abstract.");
+	}
 }
 
 
