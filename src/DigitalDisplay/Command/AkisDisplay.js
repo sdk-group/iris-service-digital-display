@@ -22,7 +22,7 @@ let chartable = {
 };
 
 function toHex(char) {
-	return chartable[char];
+	return _.isUndefined(chartable[char]) ? chartable[" "] : chartable[char];
 }
 class AkisDisplay extends AbstractDisplay {
 	static getCommand(params) {
@@ -64,10 +64,10 @@ class AkisDisplay extends AbstractDisplay {
 		msg[3] = 0x47;
 
 		let num_buff = msg.slice(4, 7);
-		let nums = _.chunk(_.padEnd(_.truncate(data, {
-			length: bd,
-			omission: ''
-		}), bd, ' '), 2);
+		let nums = _.chunk(_.padEnd(_(data)
+				.takeRight(bd)
+				.join(''), bd, ' '),
+			2);
 		_.map(nums, (num_pair, i) => {
 			num_buff[i] = 0xFF & (toHex(num_pair[0]) << 4) | toHex(num_pair[1]);
 		});
@@ -76,7 +76,7 @@ class AkisDisplay extends AbstractDisplay {
 
 		this.setCRC(msg);
 
-		console.log("MSG DISPLAY", msg);
+		// console.log("MSG DISPLAY", msg);
 		return msg;
 	}
 
@@ -87,9 +87,9 @@ class AkisDisplay extends AbstractDisplay {
 		this.setAddress(address, msg);
 		msg[3] = 0x48;
 
-		msg.writeUInt8(_.parseInt(brightness), 4);
-		msg.writeUInt8(_.parseInt(time_on), 5);
-		msg.writeUInt8(_.parseInt(time_off), 6);
+		msg.writeUInt8(_.clamp(_.parseInt(brightness), 0, 255), 4);
+		msg.writeUInt8(_.clamp(_.parseInt(time_on), 0, 255), 5);
+		msg.writeUInt8(_.clamp(_.parseInt(time_off), 0, 255), 6);
 
 		this.setCRC(msg);
 
