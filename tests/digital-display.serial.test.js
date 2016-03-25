@@ -6,14 +6,6 @@ var SerialPort = require("serialport")
 	.SerialPort
 let CommandFactory = require("./DigitalDisplay/Command/Factory");
 // var serialPort = require("serialport");
-// serialPort.list(function (err, ports) {
-// 	console.log();
-// 	ports.forEach(function (port) {
-// 		console.log(port.comName);
-// 		console.log(port.pnpId);
-// 		console.log(port.manufacturer);
-// 	});
-// });
 
 describe("DigitalDisplay service to serial", () => {
 	let service = null;
@@ -27,7 +19,7 @@ describe("DigitalDisplay service to serial", () => {
 			let cmd = CommandFactory.getCommand('Akis', {
 				address: '8723',
 				command: 'display',
-				data: 'b6C',
+				data: ' 42',
 				flash: false,
 				bit_depth: 6
 			});
