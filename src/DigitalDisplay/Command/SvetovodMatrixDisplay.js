@@ -96,36 +96,39 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 	}
 
 	static setData(num_buff, nums, height, width, x_offset, y_offset) {
-		let mx = matrices[`${width}x${height}`];
-		num_buff.fill(0);
-		let l_zeros = new RegExp("^(0*).*");
-		let r_zeros = new RegExp(".*?(0*)$");
-		_.map(nums, (num) => {
-			let num_data = mx.font[num] || mx.font[" "];
-			num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
-			let symbol_width = num_data.length / height;
-			let symbol_rows = _.chunk(num_data, symbol_width);
-			let left_offset = _(symbol_rows)
-				.map((val) => {
-					let row = _(val)
-						.map(v => v.toString(2))
-						.join('');
-					return _.size(row.match(l_zeros)[1]);
-				})
-				.min();
+			let mx = matrices[`${width}x${height}`];
+			num_buff.fill(0);
+			let l_zeros = new RegExp("^(0*).*");
+			let r_zeros = new RegExp(".*?(0*)$");
+			_.map(nums, (num) => {
+					let num_data = mx.font[num] || mx.font[" "];
+					num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
+					let symbol_width = num_data.length / height;
+					let left_offset;
+					let rigt_offset;
+					_(num_data)
+						.chunk(symbol_width)
+						.map((val) => {
+							let row = _(val)
+								.map(v => v.toString(2))
+								.join('');
+							let l_min = _.min(_.size(row.match(l_zeros)[1]))
+							left_offset = (left_offset < l_min) ? left_offset : l_min;
+							let r_min = _.min(_.size(row.match(r_zeros)[1]))
+							right_offset = (right_offset < r_min) ? right_offset : r_min;
+							for (var i = 0; i < height; i++) {}
+
+						});
+				}
+
+				static refreshCmd() {
+					return new Buffer('03FFFF03', 'hex');
+				}
+
+				static clearCmd() {
+					return new Buffer('03FFFE02', 'hex');
+				}
+			}
 
 
-		});
-	}
-
-	static refreshCmd() {
-		return new Buffer('03FFFF03', 'hex');
-	}
-
-	static clearCmd() {
-		return new Buffer('03FFFE02', 'hex');
-	}
-}
-
-
-module.exports = SvetovodMatrixDisplay;
+			module.exports = SvetovodMatrixDisplay;
