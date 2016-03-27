@@ -14,7 +14,46 @@ describe("DigitalDisplay service to serial", () => {
 		service = new DigitalDisplay();
 		service.init();
 	});
-	describe.only("DigitalDisplay service akis display", () => {
+	describe.only("DigitalDisplay service svetovod display", () => {
+		it("s...", (done) => {
+			let cmd = CommandFactory.getCommand('SvetovodMatrix', {
+				address: '255',
+				command: 'display',
+				data: '8888',
+				y_offset: -1,
+				bit_depth: 4,
+				height: 16,
+				width: 32
+			});
+			let port = new SerialPort('COM3', {
+				baudRate: 19200,
+				dataBits: 8,
+				parity: 'none',
+				stopBits: 1
+			});
+			port.on('data', function (data) {
+				console.log("DATA", data);
+			});
+			port.on('open', function (data) {
+				console.log("OPENED", data);
+			});
+
+			port.on('error', function (err) {
+				console.log("ERR", err);
+			});
+
+			port.open(function (err) {
+				console.log("SENDING");
+				port.write(cmd,
+					function (res) {
+						console.log("RESPONSE", res);
+						done();
+					});
+				port.close();
+			});
+		});
+	})
+	describe("DigitalDisplay service akis display", () => {
 		it("s...", (done) => {
 			let cmd = CommandFactory.getCommand('Akis', {
 				address: '8723',

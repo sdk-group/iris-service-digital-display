@@ -17,18 +17,15 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		};
 		let opt = _.merge(defaults, params);
 		switch (opt.command) {
-		case 'brightness':
-			return this.brightnessCmd(opt.address, opt.brightness, opt.time_on, opt.time_off);
-			break;
 		case 'clear':
-			return this.clearCmd();
+			return this.displayCmd(opt.address, '', opt.bit_depth, opt.height, opt.width);
 			break;
 		case 'refresh':
-			return this.refreshCmd();
+			return this.displayCmd(opt.address, '------', opt.bit_depth, opt.height, opt.width);
 			break;
 		case 'display':
 		default:
-			return this.displayCmd(opt.address, opt.data, opt.bit_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.flash);
+			return this.displayCmd(opt.address, opt.data, opt.bit_depth, opt.height, opt.width, opt.x_offset, opt.y_offset);
 			break;
 		}
 	}
@@ -38,13 +35,17 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let bd = _.clamp(bit_depth, 0, 4);
 		let len = height * width / 8;
 		let msg = new Buffer(len + 10 + 1);
+		msg.fill(0);
+		// console.log("MSG DISPLAY -2", msg, len);
 
 		msg[0] = msg[1] = 0x00;
 		msg[2] = 0xE0;
 		this.setAddress(address, msg);
 		//setting command 3 bytes
 		msg.writeUIntBE(len, 5, 3);
+		// console.log("MSG DISPLAY -1", msg);
 		this.setHeaderCRC(msg);
+		// console.log("MSG DISPLAY 0", msg);
 
 		let num_buff = msg.slice(10, len + 10);
 		let nums = _.padEnd(_(data)
@@ -54,7 +55,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 
 		this.setCRC(msg);
 
-		// console.log("MSG DISPLAY", msg);
+		console.log("MSG DISPLAY", msg);
 		return msg;
 	}
 
@@ -77,17 +78,17 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 
 	static setCRC(msg) {
 		let last = msg.length - 1;
-		msg[last] = _.reduce(msg.slice(0, last), (acc, byte) => {
+		msg[last] = _.reduce(msg.slice(10, last), (acc, byte) => {
 			return acc + byte;
-		}, 0x00);
+		}, 0);
 	}
 
 	static setHeaderCRC(msg) {
 		let cmd_crc = _.reduce(msg.slice(0, 8), (acc, byte) => {
 			return acc + byte;
-		}, 0x0000);
+		}, 0);
 		msg[9] = cmd_crc & 0xFF;
-		msg[10] = (cmd_crc >> 8) + msg[9];
+		msg[8] = (cmd_crc >> 8) + cmd_crc & 0xFF;
 	}
 
 	static setAddress(address, msg) {
@@ -98,36 +99,57 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 	static setData(num_buff, nums, height, width, x_offset, y_offset) {
 		let mx = matrices[`${width}x${height}`];
 		num_buff.fill(0);
-		let l_zeros = new RegExp("^(0*).*");
 		let r_zeros = new RegExp(".*?(0*)$");
+		let rows = new Array(height);
+		_.fill(rows, 0);
 		_.map(nums, (num) => {
 			let num_data = mx.font[num] || mx.font[" "];
 			num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
-			let symbol_width = num_data.length / height;
-			let left_offset;
-			let rigt_offset;
+			let symbol_width = num_data.length / height; //bytes
+			let left_offset = symbol_width * 8; //bits
+			let right_offset = symbol_width * 8; //bits
+			console.log("SYMW", symbol_width, height, width / 8, num_data, num);
 			_(num_data)
 				.chunk(symbol_width)
-				.map((val) => {
+				.map(function (val) {
 					let row = _(val)
 						.map(v => v.toString(2))
 						.join('');
-					let l_min = _.min(_.size(row.match(l_zeros)[1]))
+					console.log("ROW", row, val);
+					let l_min = _.size(row.match(r_zeros)[1]);
 					left_offset = (left_offset < l_min) ? left_offset : l_min;
-					let r_min = _.min(_.size(row.match(r_zeros)[1]))
+					let r_min = symbol_width * 8 - _.size(row);
 					right_offset = (right_offset < r_min) ? right_offset : r_min;
-					for (var i = 0; i < height; i++) {}
-
-				});
+				})
+				.value();
+			for (var i = 0; i < height; i++) {
+				let sym = num_data.readUIntLE(i * symbol_width, symbol_width);
+				console.log("READ SYM", num_data.slice(i * symbol_width, (i + 1) * symbol_width)
+					.toString('hex'), (sym)
+					.toString(2), (sym)
+					.toString(16), (symbol_width * 8 - left_offset - right_offset), left_offset, right_offset);
+				rows[i] = rows[i] << (symbol_width * 8 - left_offset - right_offset);
+				rows[i] |= sym;
+			}
 		});
-	}
-
-	static refreshCmd() {
-		return new Buffer('03FFFF03', 'hex');
-	}
-
-	static clearCmd() {
-		return new Buffer('03FFFE02', 'hex');
+		console.log("ROWS", require('util')
+			.inspect(rows, {
+				depth: null
+			}));
+		for (var j = 0; j < height; j++) {
+			let to_write = (rows[j - y_offset] || 0) >> x_offset;
+			console.log("writing", to_write);
+			num_buff.writeUIntLE(to_write, j * width / 8, width / 8);
+		}
+		_(num_buff)
+			.chunk(width / 8)
+			.map((val) => {
+				let r = _(val)
+					.map(v => v.toString(2))
+					.join('');
+				console.log(_.padStart(r, 24 - _.size(r)));
+			})
+			.value();
 	}
 }
 
