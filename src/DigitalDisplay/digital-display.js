@@ -17,6 +17,27 @@ class DigitalDisplay {
 	}
 
 	launch() {
+			this.emitter.on('digital-display.emit.command', ({
+				org_addr,
+				org_merged,
+				workstation,
+				command_data,
+				command = 'display'
+			}) => {
+				let cmd = CommandFactory.getCommand(org_merged.digital_display_options.type, _.merge({
+					address: workstation.digital_display_address,
+					command
+				}, command_data, org_merged.digital_display_options));
+
+				let data = {
+					command: cmd
+				};
+				let to_join = ['digital-display.command', org_addr];
+				this.emitter.emit('broadcast', {
+					event: _.join(to_join, "."),
+					data
+				});
+			});
 			return Promise.resolve(true);
 		}
 		//API

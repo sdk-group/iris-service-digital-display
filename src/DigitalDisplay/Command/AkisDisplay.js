@@ -34,7 +34,7 @@ class AkisDisplay extends AbstractDisplay {
 			time_off: 130,
 			brightness: 255,
 			flash: false,
-			bit_depth: 6
+			symbol_depth: 6
 		};
 		let opt = _.merge(defaults, params);
 		switch (opt.command) {
@@ -49,14 +49,14 @@ class AkisDisplay extends AbstractDisplay {
 			break;
 		case 'display':
 		default:
-			return this.displayCmd(opt.address, opt.data, opt.bit_depth, opt.flash);
+			return this.displayCmd(opt.address, opt.data, opt.symbol_depth, opt.flash);
 			break;
 		}
 	}
 
 
-	static displayCmd(address, data, bit_depth, flash) {
-		let bd = _.clamp(bit_depth, 0, 6);
+	static displayCmd(address, data, symbol_depth, flash) {
+		let bd = _.clamp(symbol_depth, 0, 6);
 		let msg = new Buffer(9);
 
 		msg[0] = 0x08;

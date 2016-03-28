@@ -9,7 +9,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			address: '1',
 			command: 'display',
 			data: '----',
-			bit_depth: 4,
+			symbol_depth: 4,
 			height: 9,
 			width: 24,
 			x_offset: 0,
@@ -18,21 +18,21 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let opt = _.merge(defaults, params);
 		switch (opt.command) {
 		case 'clear':
-			return this.displayCmd(opt.address, '', opt.bit_depth, opt.height, opt.width);
+			return this.displayCmd(opt.address, '', opt.symbol_depth, opt.height, opt.width);
 			break;
 		case 'refresh':
-			return this.displayCmd(opt.address, '------', opt.bit_depth, opt.height, opt.width);
+			return this.displayCmd(opt.address, '------', opt.symbol_depth, opt.height, opt.width);
 			break;
 		case 'display':
 		default:
-			return this.displayCmd(opt.address, opt.data, opt.bit_depth, opt.height, opt.width, opt.x_offset, opt.y_offset);
+			return this.displayCmd(opt.address, opt.data, opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset);
 			break;
 		}
 	}
 
 
-	static displayCmd(address, data, bit_depth, height, width, x_offset, y_offset, flash) {
-		let bd = _.clamp(bit_depth, 0, 4);
+	static displayCmd(address, data, symbol_depth, height, width, x_offset, y_offset, flash) {
+		let bd = _.clamp(symbol_depth, 0, 4);
 		let len = height * width / 8;
 		let msg = new Buffer(len + 10 + 1);
 		msg.fill(0);
@@ -55,7 +55,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 
 		this.setCRC(msg);
 
-		console.log("MSG DISPLAY", msg);
+		// console.log("MSG DISPLAY", msg);
 		return msg;
 	}
 
@@ -85,15 +85,17 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let r_zeros = new RegExp(".*?(0*)$");
 		let l_zeros = new RegExp("^(0*).*");
 		let rows = new Array(height);
-		_.fill(rows, 0);
+		let tmp_rows = new Array(height);
+		_.fill(rows, '');
+		_.fill(tmp_rows, 0);
 		_.map(nums, (num) => {
 			let num_data = mx.font[num] || mx.font[" "];
 			num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
 			let symbol_width = num_data.length / height; //bytes
-			let left_offset = symbol_width * 8; //bits
-			let right_offset = symbol_width * 8; //bits
-			let row_length = 0;
-			console.log("SYMW", symbol_width, height, width / 8, num_data, num);
+			let symbol_length = symbol_width * 8; //bits
+			let left_offset = symbol_length; //bits
+			let right_offset = symbol_length; //bits
+			// console.log("SYMW", symbol_width, height, width / 8, num_data, num);
 			_(num_data)
 				.chunk(symbol_width)
 				.map(function (val) {
@@ -103,7 +105,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 					row = _(row)
 						.toArray()
 						.join('');
-					console.log("ROW", row, val);
+					// console.log("ROW", row, val);
 					let l_min = _.size(row.match(l_zeros)[1]);
 					left_offset = (left_offset < l_min) ? left_offset : l_min;
 					let r_min = _.size(row.match(r_zeros)[1]);
@@ -112,41 +114,45 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 				.value();
 			for (var i = 0; i < height; i++) {
 				let sym = num_data.readUIntBE(i * symbol_width, symbol_width) >>> right_offset;
-				console.log("READ SYM", num_data.slice(i * symbol_width, (i + 1) * symbol_width)
-					.toString('hex'), (sym)
-					.toString(2), (sym)
-					.toString(16), (symbol_width * 8 - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
-				rows[i] = rows[i] << (symbol_width * 8 - right_offset - left_offset);
-				rows[i] |= (sym);
-				rows[i] = rows[i];
+				// console.log("READ SYM", num_data.slice(i * symbol_width, (i + 1) * symbol_width)
+				// 	.toString('hex'), (sym)
+				// 	.toString(2), (sym)
+				// 	.toString(16), (symbol_length - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
+				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length - left_offset - right_offset);
+				rows[i] += _.padStart((sym)
+					.toString(2), fill, '0');
 			}
 			let max = _.max(_.map(rows, r => _.size(r.toString(2))));
-			console.log("ROWS", require('util')
-				.inspect(_.map(rows, r => {
-					let s = r.toString(2);
-					s = _.padStart(s, max, "0");
-					return _(s)
-						.map(v => (v == '0' ? ' ' : '*'))
-						.join('')
-				}), {
-					depth: null
-				}));
+			// console.log("ROWS", require('util')
+			// 	.inspect(_.map(rows, s => {
+			// 		// s = _.padStart(s, max, "0");
+			// 		return _(s)
+			// 			.map(v => (v == '0' ? ' ' : '*'))
+			// 			.join('')
+			// 	}), {
+			// 		depth: null
+			// 	}));
 		});
 
 		for (var j = 0; j < height; j++) {
-			let to_write = (rows[j - y_offset] || 0) >> x_offset;
-			console.log("writing", to_write);
-			num_buff.writeUIntLE(to_write, j * width / 8, width / 8);
+			let to_write = rows[j - y_offset] || _.padStart('', width, '0');
+			//can be removed
+			if (x_offset > 0) {
+				to_write = _.padStart(to_write, x_offset + to_write.length, '0');
+			}
+			//necessary
+			if (x_offset < 0) {
+				to_write = to_write.substring(x_offset);
+			}
+			//necessary
+			to_write = to_write.substring(0, width);
+			console.log("I",
+				_(to_write)
+				.map(v => (v == '0' ? ' ' : '*'))
+				.join(''), "I"
+			);
+			num_buff.writeUIntLE(_.parseInt(to_write, 2), j * width / 8, width / 8);
 		}
-		_(num_buff)
-			.chunk(width / 8)
-			.map((val) => {
-				let r = _(val)
-					.map(v => v.toString(2))
-					.join('');
-				console.log(_.padStart(r, 24 - _.size(r)));
-			})
-			.value();
 	}
 }
 
