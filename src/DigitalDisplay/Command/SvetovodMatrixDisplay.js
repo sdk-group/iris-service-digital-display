@@ -14,24 +14,25 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			width: 24,
 			x_offset: 0,
 			y_offset: 0,
+			symbol_interval: 1
 		};
 		let opt = _.merge(defaults, params);
 		switch (opt.command) {
 		case 'clear':
-			return this.displayCmd(opt.address, '', opt.symbol_depth, opt.height, opt.width);
+			return this.displayCmd(opt.address, '', opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
 			break;
 		case 'refresh':
-			return this.displayCmd(opt.address, '------', opt.symbol_depth, opt.height, opt.width);
+			return this.displayCmd(opt.address, '------', opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
 			break;
 		case 'display':
 		default:
-			return this.displayCmd(opt.address, opt.data, opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset);
+			return this.displayCmd(opt.address, opt.data, opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
 			break;
 		}
 	}
 
 
-	static displayCmd(address, data, symbol_depth, height, width, x_offset, y_offset, flash) {
+	static displayCmd(address, data, symbol_depth, height, width, x_offset, y_offset, symbol_interval) {
 		let bd = _.clamp(symbol_depth, 0, 4);
 		let len = height * width / 8;
 		let msg = new Buffer(len + 10 + 1);
@@ -51,7 +52,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let nums = _.padEnd(_(data)
 			.takeRight(bd)
 			.join(''), bd, ' ');
-		this.setData(num_buff, nums, height, width, x_offset, y_offset);
+		this.setData(num_buff, nums, height, width, x_offset, y_offset, symbol_interval);
 
 		this.setCRC(msg);
 
@@ -79,7 +80,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		msg.writeUInt8(_.parseInt(address), 4);
 	}
 
-	static setData(num_buff, nums, height, width, x_offset, y_offset) {
+	static setData(num_buff, nums, height, width, x_offset, y_offset, symbol_interval) {
 		let mx = matrices[`${width}x${height}`];
 		num_buff.fill(0);
 		let r_zeros = new RegExp(".*?(0*)$");
@@ -118,7 +119,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 				// 	.toString('hex'), (sym)
 				// 	.toString(2), (sym)
 				// 	.toString(16), (symbol_length - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
-				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length - left_offset - right_offset);
+				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length + symbol_interval - left_offset - right_offset);
 				rows[i] += _.padStart((sym)
 					.toString(2), fill, '0');
 			}
