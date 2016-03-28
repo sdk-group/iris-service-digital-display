@@ -59,23 +59,6 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		return msg;
 	}
 
-	static brightnessCmd(address, brightness, time_on, time_off) {
-		let msg = new Buffer(8);
-
-		msg[0] = 0x07;
-		this.setAddress(address, msg);
-		msg[3] = 0x48;
-
-		msg.writeUInt8(_.clamp(_.parseInt(brightness), 0, 255), 4);
-		msg.writeUInt8(_.clamp(_.parseInt(time_on), 0, 255), 5);
-		msg.writeUInt8(_.clamp(_.parseInt(time_off), 0, 255), 6);
-
-		this.setCRC(msg);
-
-		console.log("MSG BRIGHTNESS", msg);
-		return msg;
-	}
-
 	static setCRC(msg) {
 		let last = msg.length - 1;
 		msg[last] = _.reduce(msg.slice(10, last), (acc, byte) => {
@@ -100,6 +83,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let mx = matrices[`${width}x${height}`];
 		num_buff.fill(0);
 		let r_zeros = new RegExp(".*?(0*)$");
+		let l_zeros = new RegExp("^(0*).*");
 		let rows = new Array(height);
 		_.fill(rows, 0);
 		_.map(nums, (num) => {
@@ -108,34 +92,47 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			let symbol_width = num_data.length / height; //bytes
 			let left_offset = symbol_width * 8; //bits
 			let right_offset = symbol_width * 8; //bits
+			let row_length = 0;
 			console.log("SYMW", symbol_width, height, width / 8, num_data, num);
 			_(num_data)
 				.chunk(symbol_width)
 				.map(function (val) {
 					let row = _(val)
-						.map(v => v.toString(2))
+						.map(v => _.padStart(v.toString(2), 8, '0'))
+						.join('');
+					row = _(row)
+						.toArray()
 						.join('');
 					console.log("ROW", row, val);
-					let l_min = _.size(row.match(r_zeros)[1]);
+					let l_min = _.size(row.match(l_zeros)[1]);
 					left_offset = (left_offset < l_min) ? left_offset : l_min;
-					let r_min = symbol_width * 8 - _.size(row);
+					let r_min = _.size(row.match(r_zeros)[1]);
 					right_offset = (right_offset < r_min) ? right_offset : r_min;
 				})
 				.value();
 			for (var i = 0; i < height; i++) {
-				let sym = num_data.readUIntLE(i * symbol_width, symbol_width);
+				let sym = num_data.readUIntBE(i * symbol_width, symbol_width) >>> right_offset;
 				console.log("READ SYM", num_data.slice(i * symbol_width, (i + 1) * symbol_width)
 					.toString('hex'), (sym)
 					.toString(2), (sym)
-					.toString(16), (symbol_width * 8 - left_offset - right_offset), left_offset, right_offset);
-				rows[i] = rows[i] << (symbol_width * 8 - left_offset - right_offset);
-				rows[i] |= sym;
+					.toString(16), (symbol_width * 8 - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
+				rows[i] = rows[i] << (symbol_width * 8 - right_offset - left_offset);
+				rows[i] |= (sym);
+				rows[i] = rows[i];
 			}
+			let max = _.max(_.map(rows, r => _.size(r.toString(2))));
+			console.log("ROWS", require('util')
+				.inspect(_.map(rows, r => {
+					let s = r.toString(2);
+					s = _.padStart(s, max, "0");
+					return _(s)
+						.map(v => (v == '0' ? ' ' : '*'))
+						.join('')
+				}), {
+					depth: null
+				}));
 		});
-		console.log("ROWS", require('util')
-			.inspect(rows, {
-				depth: null
-			}));
+
 		for (var j = 0; j < height; j++) {
 			let to_write = (rows[j - y_offset] || 0) >> x_offset;
 			console.log("writing", to_write);

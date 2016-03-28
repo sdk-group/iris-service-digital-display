@@ -19,8 +19,9 @@ describe("DigitalDisplay service to serial", () => {
 			let cmd = CommandFactory.getCommand('SvetovodMatrix', {
 				address: '255',
 				command: 'display',
-				data: '8888',
+				data: '8818',
 				y_offset: -1,
+				x_offset: 0,
 				bit_depth: 4,
 				height: 16,
 				width: 32
