@@ -77,7 +77,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 
 	static setAddress(address, msg) {
 		msg[3] = 0x00;
-		msg.writeUInt8(_.parseInt(address), 4);
+		msg.writeUInt8(_.parseInt(address), 4, true);
 	}
 
 	static setData(num_buff, nums, height, width, x_offset, y_offset, symbol_interval) {
@@ -86,9 +86,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let r_zeros = new RegExp(".*?(0*)$");
 		let l_zeros = new RegExp("^(0*).*");
 		let rows = new Array(height);
-		let tmp_rows = new Array(height);
 		_.fill(rows, '');
-		_.fill(tmp_rows, 0);
 		_.map(nums, (num, index) => {
 			let num_data = mx.font[num] || mx.font[" "];
 			num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
@@ -115,10 +113,6 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 				.value();
 			for (var i = 0; i < height; i++) {
 				let sym = num_data.readUIntBE(i * symbol_width, symbol_width) >>> right_offset;
-				// console.log("READ SYM", num_data.slice(i * symbol_width, (i + 1) * symbol_width)
-				// 	.toString('hex'), (sym)
-				// 	.toString(2), (sym)
-				// 	.toString(16), (symbol_length - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
 				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length + (!!index && symbol_interval) - left_offset - right_offset);
 				rows[i] += _.padStart((sym)
 					.toString(2), fill, '0');
