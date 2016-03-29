@@ -19,13 +19,14 @@ describe("DigitalDisplay service to serial", () => {
 			let cmd = CommandFactory.getCommand('SvetovodMatrix', {
 				address: '255',
 				command: 'display',
-				data: '20',
-				y_offset: -1,
+				data: '1234',
+				y_offset: 0,
 				x_offset: 0,
-				symbol_depth: 5,
-				height: 16,
-				width: 32,
+				symbol_depth: 4,
+				height: 9,
+				width: 24,
 			});
+			console.log("CMD", cmd);
 			let port = new SerialPort('COM3', {
 				baudRate: 19200,
 				dataBits: 8,

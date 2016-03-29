@@ -22,7 +22,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			return this.displayCmd(opt.address, '', opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
 			break;
 		case 'refresh':
-			return this.displayCmd(opt.address, '------', opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
+			return this.displayCmd(opt.address, _.padStart('', opt.symbol_depth, '-'), opt.symbol_depth, opt.height, opt.width, opt.x_offset, opt.y_offset, opt.symbol_interval);
 			break;
 		case 'display':
 		default:
@@ -89,7 +89,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let tmp_rows = new Array(height);
 		_.fill(rows, '');
 		_.fill(tmp_rows, 0);
-		_.map(nums, (num) => {
+		_.map(nums, (num, index) => {
 			let num_data = mx.font[num] || mx.font[" "];
 			num_data = new Buffer(_.join(_.split(num_data, ' '), ''), 'hex');
 			let symbol_width = num_data.length / height; //bytes
@@ -119,7 +119,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 				// 	.toString('hex'), (sym)
 				// 	.toString(2), (sym)
 				// 	.toString(16), (symbol_length - left_offset - right_offset), left_offset, right_offset, '\t', rows[i].toString(2));
-				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length + symbol_interval - left_offset - right_offset);
+				let fill = (left_offset == symbol_length && right_offset == symbol_length) ? symbol_length : (symbol_length + (!!index && symbol_interval) - left_offset - right_offset);
 				rows[i] += _.padStart((sym)
 					.toString(2), fill, '0');
 			}
@@ -152,7 +152,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 				.map(v => (v == '0' ? ' ' : '*'))
 				.join(''), "I"
 			);
-			num_buff.writeUIntLE(_.parseInt(to_write, 2), j * width / 8, width / 8);
+			num_buff.writeUIntBE(_.parseInt(to_write, 2), j * width / 8, width / 8);
 		}
 	}
 }

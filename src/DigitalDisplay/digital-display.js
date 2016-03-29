@@ -21,7 +21,7 @@ class DigitalDisplay {
 				org_addr,
 				org_merged,
 				workstation,
-				command_data,
+				command_data = {},
 				command = 'display'
 			}) => {
 				let cmd = CommandFactory.getCommand(org_merged.digital_display_options.type, _.merge({
@@ -33,6 +33,7 @@ class DigitalDisplay {
 					command: cmd
 				};
 				let to_join = ['digital-display.command', org_addr];
+				console.log("DD EMITTING", _.join(to_join, "."), cmd);
 				this.emitter.emit('broadcast', {
 					event: _.join(to_join, "."),
 					data
