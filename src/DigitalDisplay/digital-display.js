@@ -54,17 +54,12 @@ class DigitalDisplay {
 										command,
 										data: cmd.toString('hex')
 									};
-									_(dd.occupied_by)
-										.castArray()
-										.compact()
-										.map((user_id) => {
-											let to_join = ['digital-display.command', org_addr, user_id];
-											this.emitter.emit('broadcast', {
-												event: _.join(to_join, "."),
-												data
-											});
-										})
-										.value();
+
+									let to_join = ['digital-display.command', org_addr, dd.id];
+									this.emitter.emit('broadcast', {
+										event: _.join(to_join, "."),
+										data
+									});
 
 								});
 							});
