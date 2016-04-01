@@ -27,7 +27,8 @@ class DigitalDisplay {
 			}) => {
 				this.emitter.addTask('workstation', {
 						_action: 'get-workstations-cache',
-						device_type: 'digital-display'
+						device_type: 'digital-display',
+						organization: org_merged.id
 					})
 					.then((res) => {
 						res = res['digital-display'];
@@ -56,6 +57,7 @@ class DigitalDisplay {
 									};
 
 									let to_join = ['digital-display.command', org_addr, dd.id];
+									console.log("ADDR", to_join);
 									this.emitter.emit('broadcast', {
 										event: _.join(to_join, "."),
 										data
