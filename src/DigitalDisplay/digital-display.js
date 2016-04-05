@@ -57,7 +57,7 @@ class DigitalDisplay {
 									};
 
 									let to_join = ['digital-display.command', org_addr, dd.id];
-									console.log("ADDR", to_join);
+									// console.log("ADDR", to_join);
 									this.emitter.emit('broadcast', {
 										event: _.join(to_join, "."),
 										data
