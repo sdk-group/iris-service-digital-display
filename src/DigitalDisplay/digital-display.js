@@ -1,6 +1,6 @@
 'use strict'
 
-let emitter = require("global-queue");
+
 let ServiceApi = require('resource-management-framework')
 	.ServiceApi;
 let CommandFactory = require("./Command/Factory");
@@ -8,7 +8,7 @@ let CommandFactory = require("./Command/Factory");
 
 class DigitalDisplay {
 	constructor() {
-		this.emitter = emitter;
+		this.emitter = message_bus;
 	}
 
 	init(cfg) {
