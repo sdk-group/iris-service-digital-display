@@ -76,19 +76,16 @@ class DigitalDisplay {
 		user_type = "SystemEntity"
 	}) {
 		return Promise.props({
-				workstation: this.emitter.addTask('workstation', {
-						_action: 'occupy',
-						user_id,
-						user_type,
-						workstation
-					})
-					.then((res) => {
-						return res.workstation;
-					})
-			})
-			.catch(err => {
-				console.log("DD BTSTRP ERR", err.stack);
-			});
+			workstation: this.emitter.addTask('workstation', {
+					_action: 'occupy',
+					user_id,
+					user_type,
+					workstation
+				})
+				.then((res) => {
+					return res.workstation;
+				})
+		});
 	}
 
 	actionReady({
