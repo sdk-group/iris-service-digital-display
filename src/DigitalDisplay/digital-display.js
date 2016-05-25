@@ -17,7 +17,7 @@ class DigitalDisplay {
 	}
 
 	launch() {
-			this.emitter.on('digital-display.emit.command', ({
+			this.emitter.listenTask('digital-display.emit.command', ({
 				org_addr,
 				org_merged,
 				workstation,
@@ -25,7 +25,7 @@ class DigitalDisplay {
 				command_data = {},
 				command = 'display'
 			}) => {
-				this.emitter.addTask('workstation', {
+				return this.emitter.addTask('workstation', {
 						_action: 'get-workstations-cache',
 						device_type: 'digital-display',
 						organization: org_merged.id
@@ -41,30 +41,30 @@ class DigitalDisplay {
 							.value();
 
 						return this.emitter.addTask('workstation', {
-								_action: 'by-id',
-								workstation: keys
-							})
-							.then((res) => {
-								return Promise.map(_.values(res), (dd) => {
-									let cmd = CommandFactory.getCommand(dd.display_type, _.merge({
-										address: dd.maintains[workstation],
-										command
-									}, command_data, dd));
+							_action: 'by-id',
+							workstation: keys
+						});
+					})
+					.then((res) => {
+						return Promise.map(_.values(res), (dd) => {
+							let cmd = CommandFactory.getCommand(dd.display_type, _.merge({
+								address: dd.maintains[workstation],
+								command
+							}, command_data, dd));
 
-									let data = {
-										command,
-										data: cmd.toString('hex')
-									};
+							let data = {
+								command,
+								data: cmd.toString('hex')
+							};
 
-									let to_join = ['digital-display.command', org_addr, dd.id];
-									// console.log("ADDR", to_join);
-									this.emitter.emit('broadcast', {
-										event: _.join(to_join, "."),
-										data
-									});
-
-								});
+							let to_join = ['digital-display.command', org_addr, dd.id];
+							// console.log("ADDR", to_join);
+							this.emitter.emit('broadcast', {
+								event: _.join(to_join, "."),
+								data
 							});
+							return Promise.resolve(true);
+						});
 					});
 			});
 			return Promise.resolve(true);
