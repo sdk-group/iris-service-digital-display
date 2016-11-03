@@ -9,6 +9,7 @@ let tasks = [];
 
 module.exports = {
 	module: require('./digital-display.js'),
+	name: 'digital-display',
 	permissions: [],
 	exposed: true,
 	tasks: tasks,
