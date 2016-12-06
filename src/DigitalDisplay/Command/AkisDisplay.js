@@ -42,9 +42,15 @@ class AkisDisplay extends AbstractDisplay {
 			return this.brightnessCmd(opt.address, opt.brightness, opt.time_on, opt.time_off);
 			break;
 		case 'clear':
+			return this.displayCmd(opt.address, '', opt.symbol_depth, opt.flash);
+			break;
+		case 'clear-all':
 			return this.clearCmd();
 			break;
 		case 'refresh':
+			return this.displayCmd(opt.address, _.padStart('', opt.symbol_depth, '-'), opt.symbol_depth, opt.flash);
+			break;
+		case 'refresh-all':
 			return this.refreshCmd();
 			break;
 		case 'display':
@@ -63,21 +69,26 @@ class AkisDisplay extends AbstractDisplay {
 		this.setAddress(address, msg);
 		msg[3] = 0x47;
 
-		let num_buff = msg.slice(4, 7);
-		let nums = _.chunk(_.padEnd(_(data)
-				.takeRight(bd)
-				.join(''), bd, ' '),
-			2);
-		_.map(nums, (num_pair, i) => {
-			num_buff[i] = 0xFF & (toHex(num_pair[0]) << 4) | toHex(num_pair[1]);
-		});
+		this.setMessage(msg, data, bd);
 
 		msg[7] = flash ? 0x3F : 0x40;
 
 		this.setCRC(msg);
 
-		// console.log("MSG DISPLAY", msg);
+		console.log("MSG DISPLAY", msg, address, data, symbol_depth, bd);
 		return msg;
+	}
+
+	static setMessage(msg, data, bd) {
+		let num_buff = msg.slice(4, 7);
+		let nums = _.chunk(_.padEnd(_(data)
+				.takeRight(bd)
+				.join(''), bd, ' '),
+			2);
+		console.log("NUMS", nums);
+		_.map(nums, (num_pair, i) => {
+			num_buff[i] = 0xFF & (toHex(num_pair[0]) << 4) | toHex(num_pair[1]);
+		});
 	}
 
 	static brightnessCmd(address, brightness, time_on, time_off) {
