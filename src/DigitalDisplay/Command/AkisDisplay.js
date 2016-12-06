@@ -62,24 +62,22 @@ class AkisDisplay extends AbstractDisplay {
 
 
 	static displayCmd(address, data, symbol_depth, flash) {
-		let bd = _.clamp(symbol_depth, 0, 6);
 		let msg = new Buffer(9);
 
 		msg[0] = 0x08;
 		this.setAddress(address, msg);
 		msg[3] = 0x47;
 
-		this.setMessage(msg, data, bd);
-
+		this.setMessage(msg, data, symbol_depth);
 		msg[7] = flash ? 0x3F : 0x40;
-
 		this.setCRC(msg);
 
-		console.log("MSG DISPLAY", msg, address, data, symbol_depth, bd);
+		console.log("MSG DISPLAY", msg, address, data, symbol_depth);
 		return msg;
 	}
 
-	static setMessage(msg, data, bd) {
+	static setMessage(msg, data, symbol_depth) {
+		let bd = _.clamp(symbol_depth, 0, 6);
 		let num_buff = msg.slice(4, 7);
 		let nums = _.chunk(_.padEnd(_(data)
 				.takeRight(bd)
