@@ -44,12 +44,12 @@ gulp.task("json", function () {
 gulp.task('es6', ['es6-js', 'json']);
 
 gulp.task('upd', ['es6'], function () {
-	return gulp.src(["build/**/*.js"])
+	return gulp.src(["build/**/*.js", "build/**/*.json"])
 		.pipe(gulp.dest("../iris-v2/node_modules/iris-service-digital-display/build"));
 });
 
 gulp.task('test-upd', ['start-test'], function () {
-	gulp.watch(["src/**/*.js", "tests/**/*.js"], ['upd']);
+	gulp.watch(["src/**/*.js", "src/**/*.json", "tests/**/*.js"], ['upd']);
 });
 
 gulp.task('test', ['start-test'], function () {
