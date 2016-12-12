@@ -37,7 +37,7 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 		let len = height * width / 8;
 		let msg = new Buffer(len + 10 + 1);
 		msg.fill(0);
-		// console.log("MSG DISPLAY -2", msg, len);
+		console.log("MSG DISPLAY -2", address);
 
 		msg[0] = msg[1] = 0x00;
 		msg[2] = 0xE0;
@@ -129,6 +129,24 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			// 	}));
 		});
 
+		let str_i = width,
+			str_li = 0,
+			v;
+		for (var jj = 0; jj < height; jj++) {
+			let row = rows[jj];
+			v = row.lastIndexOf('1');
+			// console.log("LI", v);
+			if (v >= 0)
+				str_li = v > str_li ? v : str_li;
+			v = row.indexOf('1');
+			// console.log("I", v);
+			if (v >= 0)
+				str_i = v < str_i ? v : str_i;
+			// console.log(str_i, str_li);
+		}
+		v = str_li - str_i + 1;
+		x_offset = _.round(x_offset + (width - v) / 2);
+		// console.log("OFFSET", x_offset);
 		for (var j = 0; j < height; j++) {
 			let to_write = rows[j - y_offset] || _.padStart('', width, '0');
 			//can be removed
@@ -137,15 +155,15 @@ class SvetovodMatrixDisplay extends AbstractDisplay {
 			}
 			//necessary
 			if (x_offset < 0) {
-				to_write = to_write.substring(x_offset);
+				to_write = to_write.substring(-x_offset);
 			}
 			//necessary
 			to_write = to_write.substring(0, width);
-			console.log("I",
-				_(to_write)
-				.map(v => (v == '0' ? ' ' : '*'))
-				.join(''), "I"
-			);
+			// console.log("I",
+			// 	_(to_write)
+			// 	.map(v => (v == '0' ? ' ' : '*'))
+			// 	.join(''), "I"
+			// );
 			num_buff.writeUIntBE(_.parseInt(to_write, 2), j * width / 8, width / 8);
 		}
 	}
